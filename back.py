@@ -6,10 +6,10 @@ import mysql.connector
 app = Flask(__name__)
 
 db_config = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': 'Arnav@12',
-    'database': 'RegistrationSystem'
+    'host':'localhost',
+    'user':'root',
+    'password':'Arnav@12',
+    'database':'RegistrationSystem'
 }
 
 def get_db_connection():
@@ -27,22 +27,15 @@ def init_database():
         event_location VARCHAR(255) NOT NULL
     )
     ''')
-    
-    conn.commit()
-    cursor.close()
-    conn.close()
 
-def create_event_table(event_id):
-    event_table_name = event_id
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    cursor.execute(f'''
-    CREATE TABLE IF NOT EXISTS `{event_table_name}` (
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS participants (
         id INT AUTO_INCREMENT PRIMARY KEY,
+        event_id INT,
         participant_name VARCHAR(255) NOT NULL,
         participant_email VARCHAR(255) NOT NULL,
-        participant_phone VARCHAR(50)
+        participant_phone VARCHAR(50),
+        FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
     )
     ''')
 
@@ -59,7 +52,7 @@ def index():
     cursor.close()
     conn.close()
     return render_template('index.html', events=events)
-
+    
 @app.route('/create', methods=['POST'])
 def create():
     event_name = request.form['event_name']
@@ -69,22 +62,12 @@ def create():
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute('''
-    INSERT INTO events (event_name, event_date, event_location)
+    INSERT INTO events (event_name, event_date, event_location) 
     VALUES (%s, %s, %s)
     ''', (event_name, event_date, event_location))
     conn.commit()
     cursor.close()
     conn.close()
-
-    # After creating the event, create a dynamic table for it
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute('SELECT LAST_INSERT_ID()')
-    event_id = cursor.fetchone()[0]
-    create_event_table(event_id)  # Creating the event-specific table
-    cursor.close()
-    conn.close()
-
     return redirect("/")
 
 @app.route('/register', methods=['POST'])
@@ -94,19 +77,16 @@ def register():
     participant_email = request.form['participant_email']
     participant_phone = request.form['participant_phone']
 
-    # Use the event_id to insert into the correct dynamic table
-    event_table_name = f"event_{event_id}"
-    
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute(f'''
-    INSERT INTO `{event_table_name}` (participant_name, participant_email, participant_phone)
-    VALUES (%s, %s, %s)
-    ''', (participant_name, participant_email, participant_phone))
+    cursor.execute('''
+    INSERT INTO participants 
+    (event_id, participant_name, participant_email, participant_phone) 
+    VALUES (%s, %s, %s, %s)
+    ''', (event_id, participant_name, participant_email, participant_phone))
     conn.commit()
     cursor.close()
     conn.close()
-
     return redirect("/")
 
 @app.route('/event/<int:event_id>')
@@ -117,8 +97,7 @@ def view_event_participants(event_id):
     cursor.execute('SELECT * FROM events WHERE id = %s', (event_id,))
     event = cursor.fetchone()
 
-    event_table_name = f"event_{event_id}"
-    cursor.execute(f'SELECT * FROM `{event_table_name}`')
+    cursor.execute('SELECT * FROM participants WHERE event_id = %s', (event_id,))
     participants = cursor.fetchall()
 
     cursor.close()
@@ -129,3 +108,4 @@ def view_event_participants(event_id):
 if __name__ == '__main__':
     init_database()
     app.run(debug=True)
+    

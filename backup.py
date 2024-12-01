@@ -5,20 +5,17 @@ import mysql.connector
 
 app = Flask(__name__)
 
-# Database configuration using environment variables with fallbacks
 db_config = {
-    'host': os.getenv('DB_HOST', 'localhost'),
-    'user': os.getenv('DB_USER', 'root'),
-    'password': os.getenv('DB_PASSWORD', 'Arnav@12'),
-    'database': os.getenv('DB_NAME', 'RegistrationSystem')
+    'host':'localhost',
+    'user':'root',
+    'password':'Arnav@12',
+    'database':'RegistrationSystem'
 }
 
 def get_db_connection():
-    """Establish a database connection."""
     return mysql.connector.connect(**db_config)
 
 def init_database():
-    """Initialize database tables."""
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -28,17 +25,6 @@ def init_database():
         event_name VARCHAR(255) NOT NULL,
         event_date DATE NOT NULL,
         event_location VARCHAR(255) NOT NULL
-    )
-    ''')
-
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS participants (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        event_id INT,
-        participant_name VARCHAR(255) NOT NULL,
-        participant_email VARCHAR(255) NOT NULL,
-        participant_phone VARCHAR(50),
-        FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
     )
     ''')
 
@@ -55,22 +41,34 @@ def index():
     cursor.close()
     conn.close()
     return render_template('index.html', events=events)
-
+    
 @app.route('/create', methods=['POST'])
 def create():
     event_name = request.form['event_name']
     event_date = request.form['event_date']
     event_location = request.form['event_location']
 
-    if not validate_date(event_date):
-        return "Invalid date format. Use YYYY-MM-DD.", 400
-
     conn = get_db_connection()
     cursor = conn.cursor()
+    
     cursor.execute('''
     INSERT INTO events (event_name, event_date, event_location) 
     VALUES (%s, %s, %s)
     ''', (event_name, event_date, event_location))
+    
+    cursor.execute('SELECT MAX(id) FROM events')
+    event_id = cursor.fetchone()[0]
+    
+    table_name = f"event_{event_id}_participants"
+    cursor.execute(f'''
+    CREATE TABLE {table_name} (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        participant_name VARCHAR(255) NOT NULL,
+        participant_email VARCHAR(255) NOT NULL,
+        participant_phone VARCHAR(50)
+    )
+    ''')
+    
     conn.commit()
     cursor.close()
     conn.close()
@@ -83,16 +81,16 @@ def register():
     participant_email = request.form['participant_email']
     participant_phone = request.form['participant_phone']
 
-    if not validate_email(participant_email):
-        return "Invalid email address.", 400
-
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute('''
-    INSERT INTO participants 
-    (event_id, participant_name, participant_email, participant_phone) 
-    VALUES (%s, %s, %s, %s)
-    ''', (event_id, participant_name, participant_email, participant_phone))
+    
+    table_name = f"event_{event_id}_participants"
+    cursor.execute(f'''
+    INSERT INTO {table_name}
+    (participant_name, participant_email, participant_phone) 
+    VALUES (%s, %s, %s)
+    ''', (participant_name, participant_email, participant_phone))
+    
     conn.commit()
     cursor.close()
     conn.close()
@@ -103,12 +101,11 @@ def view_event_participants(event_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-    # Fetch event details
     cursor.execute('SELECT * FROM events WHERE id = %s', (event_id,))
     event = cursor.fetchone()
 
-    # Fetch participants for the event
-    cursor.execute('SELECT * FROM participants WHERE event_id = %s', (event_id,))
+    table_name = f"event_{event_id}_participants"
+    cursor.execute(f'SELECT * FROM {table_name}')
     participants = cursor.fetchall()
 
     cursor.close()
@@ -116,18 +113,7 @@ def view_event_participants(event_id):
 
     return render_template('event_details.html', event=event, participants=participants)
 
-def validate_date(date_text):
-    """Validate date format."""
-    try:
-        datetime.strptime(date_text, '%Y-%m-%d')
-        return True
-    except ValueError:
-        return False
-
-def validate_email(email):
-    """Validate email format."""
-    return '@' in email and '.' in email
-
 if __name__ == '__main__':
     init_database()
     app.run(debug=True)
+    
