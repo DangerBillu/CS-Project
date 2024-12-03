@@ -2,13 +2,13 @@ import os
 from datetime import datetime, date
 from flask import Flask, render_template, request, redirect
 import mysql.connector
-
+#yeh a
 app = Flask(__name__)
 
 db_config = {
     'host': 'localhost',
     'user': 'root',
-    'password': 'Arnav@12',
+    'password': 'arnav',
     'database': 'RegistrationSystem'
 }
 

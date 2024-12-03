@@ -1,5 +1,4 @@
-import os
-from datetime import datetime, date
+from datetime import date
 from flask import Flask, render_template, request, redirect
 import mysql.connector
 
@@ -8,7 +7,7 @@ app = Flask(__name__)
 db_config = {
     'host':'localhost',
     'user':'root',
-    'password':'Arnav@12',
+    'password':'arnav',
     'database':'RegistrationSystem'
 }
 
@@ -21,10 +20,21 @@ def init_database():
 
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS events (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id INT PRIMARY KEY,
         event_name VARCHAR(255) NOT NULL,
         event_date DATE NOT NULL,
         event_location VARCHAR(255) NOT NULL
+    )
+    ''')
+
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS participants (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        event_id INT,
+        participant_name VARCHAR(255) NOT NULL,
+        participant_email VARCHAR(255) NOT NULL,
+        participant_phone VARCHAR(50),
+        FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
     )
     ''')
 
@@ -50,25 +60,10 @@ def create():
 
     conn = get_db_connection()
     cursor = conn.cursor()
-    
     cursor.execute('''
     INSERT INTO events (event_name, event_date, event_location) 
     VALUES (%s, %s, %s)
     ''', (event_name, event_date, event_location))
-    
-    cursor.execute('SELECT MAX(id) FROM events')
-    event_id = cursor.fetchone()[0]
-    
-    table_name = f"event_{event_id}_participants"
-    cursor.execute(f'''
-    CREATE TABLE {table_name} (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        participant_name VARCHAR(255) NOT NULL,
-        participant_email VARCHAR(255) NOT NULL,
-        participant_phone VARCHAR(50)
-    )
-    ''')
-    
     conn.commit()
     cursor.close()
     conn.close()
@@ -83,14 +78,11 @@ def register():
 
     conn = get_db_connection()
     cursor = conn.cursor()
-    
-    table_name = f"event_{event_id}_participants"
-    cursor.execute(f'''
-    INSERT INTO {table_name}
-    (participant_name, participant_email, participant_phone) 
-    VALUES (%s, %s, %s)
-    ''', (participant_name, participant_email, participant_phone))
-    
+    cursor.execute('''
+    INSERT INTO participants 
+    (event_id, participant_name, participant_email, participant_phone) 
+    VALUES (%s, %s, %s, %s)
+    ''', (event_id, participant_name, participant_email, participant_phone))
     conn.commit()
     cursor.close()
     conn.close()
@@ -104,8 +96,7 @@ def view_event_participants(event_id):
     cursor.execute('SELECT * FROM events WHERE id = %s', (event_id,))
     event = cursor.fetchone()
 
-    table_name = f"event_{event_id}_participants"
-    cursor.execute(f'SELECT * FROM {table_name}')
+    cursor.execute('SELECT * FROM participants WHERE event_id = %s', (event_id,))
     participants = cursor.fetchall()
 
     cursor.close()
@@ -116,4 +107,3 @@ def view_event_participants(event_id):
 if __name__ == '__main__':
     init_database()
     app.run(debug=True)
-    
