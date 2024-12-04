@@ -1,3 +1,4 @@
+import os
 from datetime import date
 from flask import Flask, render_template, request, redirect
 import mysql.connector
@@ -5,45 +6,53 @@ import mysql.connector
 app = Flask(__name__)
 
 db_config = {
-    'host':'localhost',
-    'user':'root',
-    'password':'arnav',
-    'database':'RegistrationSystem'
+    'host': 'localhost',
+    'user': 'root',
+    'password': 'arnav',
+    'database': 'test'
 }
 
 def get_db_connection():
     return mysql.connector.connect(**db_config)
 
 def init_database():
+#to create a table for events
     conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS events (
-        id INT PRIMARY KEY,
-        event_name VARCHAR(255) NOT NULL,
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        event_name VARCHAR(255) NOT NULL UNIQUE,
         event_date DATE NOT NULL,
         event_location VARCHAR(255) NOT NULL
     )
     ''')
+    conn.commit()
+    cursor.close()
+    conn.close()
 
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS participants (
+def create_event_table(event_name):
+#to create a table for each event to store participants
+    table_name = event_name
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(f'''
+    CREATE TABLE IF NOT EXISTS `{table_name}` (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        event_id INT,
         participant_name VARCHAR(255) NOT NULL,
         participant_email VARCHAR(255) NOT NULL,
-        participant_phone VARCHAR(50),
-        FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+        participant_phone VARCHAR(50) NOT NULL
     )
     ''')
-
     conn.commit()
     cursor.close()
     conn.close()
 
 @app.route('/')
 def index():
+#to add events "upcoming events" on home page
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     cursor.execute('SELECT * FROM events WHERE event_date >= %s ORDER BY event_date ASC', (date.today(),))
@@ -51,57 +60,69 @@ def index():
     cursor.close()
     conn.close()
     return render_template('index.html', events=events)
-    
+
 @app.route('/create', methods=['POST'])
-def create():
+def create_event():
+#creating a new event and adding it to the events table
     event_name = request.form['event_name']
     event_date = request.form['event_date']
     event_location = request.form['event_location']
 
     conn = get_db_connection()
     cursor = conn.cursor()
+
     cursor.execute('''
-    INSERT INTO events (event_name, event_date, event_location) 
+    INSERT INTO events (event_name, event_date, event_location)
     VALUES (%s, %s, %s)
     ''', (event_name, event_date, event_location))
     conn.commit()
+
+    create_event_table(event_name)
+
     cursor.close()
     conn.close()
-    return redirect("/")
+    return redirect('/')
 
 @app.route('/register', methods=['POST'])
-def register():
-    event_id = request.form['event_id']
+def register_participant():
+#to register a participant for an event and add it to the respective event table
+    event_name = request.form['event_name']
     participant_name = request.form['participant_name']
     participant_email = request.form['participant_email']
     participant_phone = request.form['participant_phone']
 
+    table_name = event_name
+
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute('''
-    INSERT INTO participants 
-    (event_id, participant_name, participant_email, participant_phone) 
-    VALUES (%s, %s, %s, %s)
-    ''', (event_id, participant_name, participant_email, participant_phone))
+
+    cursor.execute(f'''
+    INSERT INTO `{table_name}` (participant_name, participant_email, participant_phone)
+    VALUES (%s, %s, %s)
+    ''', (participant_name, participant_email, participant_phone))
     conn.commit()
+
     cursor.close()
     conn.close()
-    return redirect("/")
+    return redirect('/')
 
-@app.route('/event/<int:event_id>')
-def view_event_participants(event_id):
+@app.route('/event/<event_name>')
+#to fetch all the participants of an event and display in respective event page 
+def view_event_participants(event_name):
+    table_name = event_name
+
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-    cursor.execute('SELECT * FROM events WHERE id = %s', (event_id,))
+
+    cursor.execute('SELECT * FROM events WHERE event_name = %s', (event_name,))
     event = cursor.fetchone()
 
-    cursor.execute('SELECT * FROM participants WHERE event_id = %s', (event_id,))
+    cursor.execute(f'SELECT * FROM `{table_name}`')
     participants = cursor.fetchall()
 
     cursor.close()
     conn.close()
-
     return render_template('event_details.html', event=event, participants=participants)
 
 if __name__ == '__main__':
