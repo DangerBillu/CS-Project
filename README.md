@@ -16,6 +16,7 @@ This is a web-based **Event Management System** designed as a 12th-grade Compute
 ### Backend
 - **Python**
 - **Flask**
+- **mysql-connector**
 
 ## 🛠️ Setup Instructions
 ### Clone the Repository
