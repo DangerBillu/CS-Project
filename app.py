@@ -7,15 +7,15 @@ app = Flask(__name__)
 db_config = {
     'host': 'localhost',
     'user': 'root',
-    'password': 'arnav',
-    'database': 'test'
+    'password': '', #your password
+    'database': '' #databse name
 }
 
 def get_db_connection():
     return mysql.connector.connect(**db_config)
 
 def init_database():
-    # Create the events table if it doesn't exist
+    # Creating events table if it doesn't exist
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute(''' 
@@ -31,7 +31,7 @@ def init_database():
     conn.close()
 
 def create_event_table(event_name):
-    # Create a table for participants of a specific event
+    # Creating table for participants of a specific event
     table_name = event_name.replace(" ", "_").lower()
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -49,7 +49,7 @@ def create_event_table(event_name):
 
 @app.route('/')
 def index():
-    # Display upcoming events
+    # Displays upcoming events
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     cursor.execute('SELECT * FROM events WHERE event_date >= %s ORDER BY event_date ASC', (date.today(),))
@@ -60,10 +60,7 @@ def index():
 
 @app.route('/create', methods=['POST'])
 def create():
-    # Create a new event
-    if 'event_name' not in request.form:
-        return "Error: Missing event_name in the form submission.", 400
-
+    # Creatinga new event
     event_name = request.form['event_name']
     event_date = request.form['event_date']
     event_location = request.form['event_location']
@@ -91,23 +88,12 @@ def register_participant():
     participant_email = request.form['participant_email']
     participant_phone = request.form['participant_phone']
 
-    # Check if event_name is provided
-    if not event_name:
-        return "Error: Missing event_name in the form submission.", 400
-
-    # Sanitize event_name for use as a table name: replace spaces with underscores, and make it lowercase
     table_name = event_name.replace(" ", "_").lower()
 
-    # Ensure the table name is not empty or malformed
-    if not table_name:
-        return "Error: Invalid event_name.", 400
-
-    # Establish database connection and insert the participant into the respective table
     conn = get_db_connection()
     cursor = conn.cursor()
 
     try:
-        # Insert the participant's data into the specific event table
         cursor.execute(f'''
         INSERT INTO `{table_name}` (participant_name, participant_email, participant_phone)
         VALUES (%s, %s, %s)
@@ -163,7 +149,7 @@ def edit_participant(event_name, participant_id):
 
         return redirect(url_for('view_event_participants', event_name=event_name))
 
-    # Get the participant details to pre-fill the form
+    # Gets the prelfilled data in edit_participant.html
     cursor.execute(f'SELECT * FROM `{table_name}` WHERE id = %s', (participant_id,))
     participant = cursor.fetchone()
 
@@ -174,7 +160,7 @@ def edit_participant(event_name, participant_id):
 
 @app.route('/delete_participant/<event_name>/<int:participant_id>', methods=['POST'])
 def delete_participant(event_name, participant_id):
-    # Delete participant from the event
+    # Delets participant from  event
     table_name = event_name.replace(" ", "_").lower()
 
     conn = get_db_connection()
