@@ -1,4 +1,3 @@
-import os
 from datetime import date
 from flask import Flask, render_template, request, redirect
 import mysql.connector
@@ -62,7 +61,7 @@ def index():
     return render_template('index.html', events=events)
 
 @app.route('/create', methods=['POST'])
-def create_event():
+def create():
 #creating a new event and adding it to the events table
     event_name = request.form['event_name']
     event_date = request.form['event_date']
@@ -125,6 +124,55 @@ def view_event_participants(event_name):
     conn.close()
     return render_template('event_details.html', event=event, participants=participants)
 
+@app.route('/event/<event_name>/edit/<participant_id>', methods=['GET', 'POST'])
+def edit_participant(event_name, participant_id):
+    table_name = event_name
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    if request.method == 'POST':
+        # Update the participant's details
+        participant_name = request.form['participant_name']
+        participant_email = request.form['participant_email']
+        participant_phone = request.form['participant_phone']
+
+        cursor.execute(f'''
+        UPDATE `{table_name}`
+        SET participant_name = %s, participant_email = %s, participant_phone = %s
+        WHERE id = %s
+        ''', (participant_name, participant_email, participant_phone, participant_id))
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+        return redirect(f'/event/{event_name}')
+
+    # Fetch the participant's current details for editing
+    cursor.execute(f'SELECT * FROM `{table_name}` WHERE id = %s', (participant_id,))
+    participant = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
+    return render_template('edit_participant.html', event_name=event_name, participant=participant)
+
+@app.route('/event/<event_name>/delete/<int:participant_id>', methods=['POST'])
+def delete_participant(event_name, participant_id):
+    table_name = event_name
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Delete the participant's record
+    cursor.execute(f'DELETE FROM `{table_name}` WHERE id = %s', (participant_id,))
+    conn.commit()
+
+    cursor.close()
+    conn.close()
+    return redirect(f'/event/{event_name}')
+
 if __name__ == '__main__':
     init_database()
-    app.run(debug=True)
+    app.run(debug=True)  
+
+
