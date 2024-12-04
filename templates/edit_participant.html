@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Participant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-r from-blue-50 via-blue-100 to-purple-100 text-gray-800 min-h-screen">
+
+    <div class="container mx-auto px-6 py-12 max-w-5xl">
+
+        <div class="bg-white shadow-2xl rounded-xl p-8 mb-12 border-t-8 border-blue-500">
+            <h1 class="text-4xl font-extrabold text-blue-600 mb-4">Edit Participant - {{ participant['participant_name'] }}</h1>
+
+            <form method="POST" action="{{ url_for('edit_participant', event_name=event_name, participant_id=participant['id']) }}" class="space-y-6">
+                <div>
+                    <label for="participant_name" class="block text-lg font-semibold text-gray-700">Participant Name</label>
+                    <input type="text" id="participant_name" name="participant_name" value="{{ participant['participant_name'] }}" class="mt-2 p-3 w-full border rounded-md" required>
+                </div>
+                <div>
+                    <label for="participant_email" class="block text-lg font-semibold text-gray-700">Participant Email</label>
+                    <input type="email" id="participant_email" name="participant_email" value="{{ participant['participant_email'] }}" class="mt-2 p-3 w-full border rounded-md" required>
+                </div>
+                <div>
+                    <label for="participant_phone" class="block text-lg font-semibold text-gray-700">Participant Phone</label>
+                    <input type="text" id="participant_phone" name="participant_phone" value="{{ participant['participant_phone'] }}" class="mt-2 p-3 w-full border rounded-md" required>
+                </div>
+                <div class="flex justify-end space-x-4">
+                    <button type="submit" class="bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition">Save Changes</button>
+                    <a href="{{ url_for('view_event_participants', event_name=event_name) }}" class="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition">Cancel</a>
+                </div>
+            </form>
+        </div>
+
+    </div>
+
+    <div class="bg-yellow-300 mb-2 border-y-2 border-black text-black py-2">
+        <span class="px-20">2024 Event Management System - A Computer Science Investigatory Project by Arnav Goyal, Sahil Singhal and Tanmay Srivastava | Manage your events effortlessly! | Designed with ❤️</span>
+    </div>
+
+</body>
+</html>
