@@ -19,7 +19,3 @@ This is a web-based **Event Management System** designed as a 12th-grade Compute
 - **mysql-connector**
 
 ## 🛠️ Setup Instructions
-### Clone the Repository
-```bash
-git clone https://github.com/<your-username>/event-management-system.git
-cd event-management-system
