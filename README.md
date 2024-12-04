@@ -11,11 +11,10 @@ This is a web-based **Event Management System** designed as a 12th-grade Compute
 ## 📋 Technologies Used
 ### Frontend
 - **HTML**
-- **Tailwind CSS**
+- **Tailwind CSS** - https://tailwindcss.com/docs/installation
 
 ### Backend
-- **Python**
-- **Flask**
-- **mysql-connector**
+- **Python** 
+- **Flask** - "pip install flask"
+- **mysql-connector** - "pip install mysql-connector-python"
 
-## 🛠️ Setup Instructions
