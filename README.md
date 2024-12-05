@@ -29,4 +29,15 @@ event-management-system/
 ├── app.py                   
 └── README.md               
 ```
+## File Work
+
+### Figma File
+You can access the Figma file for the project design here:  
+[Click to Open Figma File](https://www.figma.com/community/file/1446483770995211383/grade12-investigatoryprjotect-filework)  
+*(Note: This file is editable. You can copy the layers into your own Figma file for further edits.)*
+
+### PDF Document
+The PDF document for the project report can be found here:  
+[Download PDF Report](https://github.com/DangerBillu/CS-Project.git)  
+*(This document contains the complete project report. Missing sections like the introductory page, certificate, and acknowledgement, along with an updated index, need to be added according to your school's requirements.)*
 ---
