@@ -33,7 +33,7 @@ event-management-system/
 
 ### Figma File
 You can access the Figma file for the project design here:  
-[Click to Open Figma File](https://www.figma.com/community/file/1446483770995211383/grade12-investigatoryprjotect-filework)  
+[Click to Open Figma File]([https://www.figma.com/community/file/1446483770995211383/grade12-investigatoryprjotect-filework](https://github.com/DangerBillu/CS-Project/blob/main/generalFIle_CsProject.pdf))  
 *(Note: This file is editable. You can copy the layers into your own Figma file for further edits.)*
 
 ### PDF Document
